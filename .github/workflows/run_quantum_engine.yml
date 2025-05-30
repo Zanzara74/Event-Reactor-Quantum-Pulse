@@ -40,5 +40,8 @@ jobs:
       - name: Install charset_normalizer explicitly
         run: pip install charset_normalizer
 
+      - name: Install idna explicitly
+        run: pip install idna
+
       - name: Run Quantum Signal Engine
         run: python quantum_signal_engine.py
