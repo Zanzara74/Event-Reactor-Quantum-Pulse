@@ -1,4 +1,2 @@
-# Fair value check module placeholder
-
 def score(df, fair_value):
-    return 0
+    return 1 if df['Close'].iloc[-1] < fair_value * 0.9 else 0
