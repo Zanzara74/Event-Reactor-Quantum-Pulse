@@ -1,0 +1,34 @@
+name: Generate Pinned Requirements
+
+on:
+  workflow_dispatch:
+
+jobs:
+  pin_dependencies:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Create virtual environment and install base packages
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install pandas==1.5.3 yfinance==0.2.18 scikit-learn==1.2.2 joblib==1.3.1 ta==0.11.0 requests==2.31.0
+
+      - name: Generate pinned requirements.txt
+        run: |
+          source venv/bin/activate
+          pip freeze > pinned-requirements.txt
+
+      - name: Upload pinned requirements artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: pinned-requirements
+          path: pinned-requirements.txt
