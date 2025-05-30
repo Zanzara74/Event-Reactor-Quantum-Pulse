@@ -55,5 +55,7 @@ jobs:
       - name: Install frozendict explicitly
         run: pip install frozendict
 
+      - name: Install appdirs explicitly
+        run: pip install appdirs
       - name: Run Quantum Signal Engine
         run: python quantum_signal_engine.py
