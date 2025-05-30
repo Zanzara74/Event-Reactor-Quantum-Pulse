@@ -52,5 +52,8 @@ jobs:
       - name: Install beautifulsoup4 explicitly
         run: pip install beautifulsoup4
 
+      - name: Install frozendict explicitly
+        run: pip install frozendict
+
       - name: Run Quantum Signal Engine
         run: python quantum_signal_engine.py
