@@ -37,5 +37,8 @@ jobs:
       - name: Install urllib3 explicitly
         run: pip install urllib3
 
+      - name: Install charset_normalizer explicitly
+        run: pip install charset_normalizer
+
       - name: Run Quantum Signal Engine
         run: python quantum_signal_engine.py
