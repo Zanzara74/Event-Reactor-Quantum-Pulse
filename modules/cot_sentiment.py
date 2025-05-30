@@ -1,4 +1,3 @@
-# COT sentiment module placeholder
-
 def score(ticker):
-    return 0
+    # Fetch and analyze COT data here
+    return 1
