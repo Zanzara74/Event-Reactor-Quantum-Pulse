@@ -1,0 +1,32 @@
+name: Run Quantum Engine Test
+
+on:
+  workflow_dispatch:    # manual trigger in GitHub UI
+  push:
+    branches:
+      - main           # runs on push to main branch
+
+jobs:
+  run_engine:
+    runs-on: ubuntu-latest
+
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Quantum Signal Engine
+        run: python quantum_signal_engine.py
