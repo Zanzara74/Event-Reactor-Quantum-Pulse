@@ -37,3 +37,13 @@ jobs:
 
       - name: Run Quantum Signal Engine
         run: python quantum_signal_engine.py
+
+              - name: Install dependencies
+        run: pip install -r requirements.txt --no-deps
+
+      - name: Install urllib3 explicitly
+        run: pip install urllib3
+
+      - name: Run Quantum Signal Engine
+        run: python quantum_signal_engine.py
+
