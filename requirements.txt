@@ -11,3 +11,4 @@ certifi==2025.4.26
 cryptography==45.0.3
 beautifulsoup4==4.13.4
 frozendict==2.4.6
+appdirs==1.4.4
