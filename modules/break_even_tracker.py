@@ -1,4 +1,3 @@
-# Break even tracker module placeholder
-
 def score(ticker):
-    return 0
+    # Implement logic based on trade data or historic prices
+    return 1
