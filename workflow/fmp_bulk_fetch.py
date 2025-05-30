@@ -1,19 +1,19 @@
-import os
-import requests
-import pandas as pd
-from time import sleep
+# workflow/fmp_bulk_fetch.py
 
-API_KEY = "7U3ETdS7GHwwIHFHeBdravYL2sodGADb"
+import requests
+import os
+import pandas as pd
+from config import FMP_API_KEY
+
 BASE_URL = "https://financialmodelingprep.com/api/v3"
-DATA_DIR = "data/financials"
 
 def fetch_and_save_financials(ticker):
     endpoints = {
-        "income_statement": f"/income-statement/{ticker}?limit=120&apikey={API_KEY}",
-        "balance_sheet": f"/balance-sheet-statement/{ticker}?limit=120&apikey={API_KEY}",
-        "cash_flow": f"/cash-flow-statement/{ticker}?limit=120&apikey={API_KEY}",
+        "income_statement": f"/income-statement/{ticker}?limit=120&apikey={FMP_API_KEY}",
+        "balance_sheet": f"/balance-sheet-statement/{ticker}?limit=120&apikey={FMP_API_KEY}",
+        "cash_flow": f"/cash-flow-statement/{ticker}?limit=120&apikey={FMP_API_KEY}",
     }
-
+ 
     ticker_dir = os.path.join(DATA_DIR, ticker)
     os.makedirs(ticker_dir, exist_ok=True)
 
