@@ -1,3 +1,6 @@
 def score(ticker):
-    # Fetch and analyze COT data here
+    """
+    Placeholder COT sentiment.
+    TODO: Fetch and analyze COT data.
+    """
     return 1
