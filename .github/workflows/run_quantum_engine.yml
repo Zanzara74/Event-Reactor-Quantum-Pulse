@@ -43,5 +43,8 @@ jobs:
       - name: Install idna explicitly
         run: pip install idna
 
+      - name: Install certifi explicitly
+        run: pip install certifi
+
       - name: Run Quantum Signal Engine
         run: python quantum_signal_engine.py
