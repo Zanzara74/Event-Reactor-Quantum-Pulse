@@ -1,4 +1,6 @@
 import pandas as pd
+import requests
+from config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID  # you'll create config.py
 
 def load_universe():
     """
@@ -27,6 +29,16 @@ def load_universe():
     # Combine and deduplicate
     universe = list(set(tickers_ftse + tickers_etf + sp500))
     return universe
+
+def send_telegram_alert(message: str):
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    data = {"chat_id": TELEGRAM_CHAT_ID, "text": message}
+    try:
+        response = requests.post(url, data=data)
+        if response.status_code != 200:
+            print(f"Telegram API error: {response.text}")
+    except Exception as e:
+        print(f"Failed to send Telegram message: {e}")
 
 
 if __name__ == '__main__':
