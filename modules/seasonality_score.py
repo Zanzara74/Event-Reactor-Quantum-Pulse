@@ -1,3 +1,6 @@
 def get(ticker):
-    # TODO: Implement using historical data averaging
+    """
+    Placeholder: returns fixed seasonality score.
+    TODO: Implement historical seasonal return analysis.
+    """
     return 0.7
