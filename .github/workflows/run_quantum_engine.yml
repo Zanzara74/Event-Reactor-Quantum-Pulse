@@ -46,5 +46,8 @@ jobs:
       - name: Install certifi explicitly
         run: pip install certifi
 
+      - name: Install cryptography explicitly
+        run: pip install cryptography
+
       - name: Run Quantum Signal Engine
         run: python quantum_signal_engine.py
