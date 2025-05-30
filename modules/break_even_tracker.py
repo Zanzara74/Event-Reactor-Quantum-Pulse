@@ -1,3 +1,6 @@
 def score(ticker):
-    # Implement logic based on trade data or historic prices
+    """
+    Placeholder break-even tracker.
+    TODO: Implement based on trade data or historical prices.
+    """
     return 1
