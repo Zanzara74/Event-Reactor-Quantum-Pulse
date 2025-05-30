@@ -28,7 +28,7 @@ jobs:
           pip freeze > pinned-requirements.txt
 
       - name: Upload pinned requirements artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3.1.2
         with:
           name: pinned-requirements
           path: pinned-requirements.txt
