@@ -1,4 +1,3 @@
-# Seasonality score module placeholder
-
 def get(ticker):
-    return 0.0
+    # TODO: Implement using historical data averaging
+    return 0.7
