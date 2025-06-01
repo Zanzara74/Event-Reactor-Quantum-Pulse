@@ -1,16 +1,20 @@
 import pandas as pd
 from datetime import datetime
-from quantum_pulse.signals import (
-    seasonality_score,
-    rsi_filter,
-    divergence_detector,
-    fair_value_check,
-    break_even_tracker,
-    piotroski_score,
-    cot_sentiment,
-    exit_signals
-)
-from quantum_pulse import score_weights, logger
+
+# ─── Adjusted imports: load everything from modules/ instead of quantum_pulse.signals ────────────────────────────────────
+import modules.seasonality_score       as seasonality_score
+import modules.rsi_filter              as rsi_filter
+import modules.divergence_detector     as divergence_detector
+import modules.fair_value_check        as fair_value_check
+import modules.break_even_tracker      as break_even_tracker
+import modules.piotroski_score         as piotroski_score
+import modules.cot_sentiment           as cot_sentiment
+import modules.exit_signals            as exit_signals
+
+# score_weights.py and logger.py live alongside this file, so import directly
+import score_weights
+import logger
+
 from utils import load_universe, get_price_data, send_telegram_alert, lookup_fair_value
 
 def run_quantum_engine():
@@ -25,7 +29,7 @@ def run_quantum_engine():
 
         fair_value = lookup_fair_value(ticker)
 
-        # Compute each component; now piotroski_score.score(ticker) uses real fundamentals
+        # Compute each component; piotroski_score.score(ticker) now uses real fundamentals
         components = {
             'seasonality': seasonality_score.get(ticker),
             'rsi': rsi_filter.score(df),
@@ -37,9 +41,9 @@ def run_quantum_engine():
         }
 
         # Weighted sum ⇒ normalized 0–10
-        score = sum(score_weights.WEIGHTS[k] * components[k] for k in components)
+        raw_sum   = sum(score_weights.WEIGHTS[k] * components[k] for k in components)
         max_score = sum(score_weights.WEIGHTS.values())
-        normalized_score = round((score / max_score) * 10, 2)
+        normalized_score = round((raw_sum / max_score) * 10, 2)
 
         # Log the raw components + normalized score
         logger.log_signal(ticker, normalized_score, components)
