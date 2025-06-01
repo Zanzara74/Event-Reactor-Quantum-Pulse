@@ -1,7 +1,7 @@
 import pandas as pd
 from datetime import datetime
 
-# ─── Adjusted imports: load everything from modules/ instead of quantum_pulse.signals ────────────────────────────────────
+# ─── Adjusted imports: everything under modules/ ──────────────────────────────────────────────────────
 import modules.seasonality_score       as seasonality_score
 import modules.rsi_filter              as rsi_filter
 import modules.divergence_detector     as divergence_detector
@@ -11,9 +11,9 @@ import modules.piotroski_score         as piotroski_score
 import modules.cot_sentiment           as cot_sentiment
 import modules.exit_signals            as exit_signals
 
-# score_weights.py and logger.py live alongside this file, so import directly
-import score_weights
-import logger
+# ─── Now that score_weights.py and logger.py live in modules/ ─────────────────────────────────────────
+import modules.score_weights           as score_weights
+import modules.logger                  as logger
 
 from utils import load_universe, get_price_data, send_telegram_alert, lookup_fair_value
 
@@ -29,15 +29,15 @@ def run_quantum_engine():
 
         fair_value = lookup_fair_value(ticker)
 
-        # Compute each component; piotroski_score.score(ticker) now uses real fundamentals
+        # Compute each component; now piotroski_score.score(ticker) uses real fundamentals
         components = {
             'seasonality': seasonality_score.get(ticker),
-            'rsi':           rsi_filter.score(df),
-            'divergence':    divergence_detector.score(df),
-            'fair_value':    fair_value_check.score(df, fair_value),
-            'break_even':    break_even_tracker.score(ticker),
-            'piotroski':     piotroski_score.score(ticker),
-            'cot':           cot_sentiment.score(ticker)
+            'rsi': rsi_filter.score(df),
+            'divergence': divergence_detector.score(df),
+            'fair_value': fair_value_check.score(df, fair_value),
+            'break_even': break_even_tracker.score(ticker),
+            'piotroski': piotroski_score.score(ticker),
+            'cot': cot_sentiment.score(ticker)
         }
 
         # Weighted sum ⇒ normalized 0–10
