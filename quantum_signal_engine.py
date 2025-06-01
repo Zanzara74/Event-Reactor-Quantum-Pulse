@@ -32,12 +32,12 @@ def run_quantum_engine():
         # Compute each component; piotroski_score.score(ticker) now uses real fundamentals
         components = {
             'seasonality': seasonality_score.get(ticker),
-            'rsi': rsi_filter.score(df),
-            'divergence': divergence_detector.score(df),
-            'fair_value': fair_value_check.score(df, fair_value),
-            'break_even': break_even_tracker.score(ticker),
-            'piotroski': piotroski_score.score(ticker),
-            'cot': cot_sentiment.score(ticker)
+            'rsi':           rsi_filter.score(df),
+            'divergence':    divergence_detector.score(df),
+            'fair_value':    fair_value_check.score(df, fair_value),
+            'break_even':    break_even_tracker.score(ticker),
+            'piotroski':     piotroski_score.score(ticker),
+            'cot':           cot_sentiment.score(ticker)
         }
 
         # Weighted sum ⇒ normalized 0–10
@@ -60,11 +60,18 @@ def run_quantum_engine():
     top_signals = sorted(scored_signals, key=lambda x: x[1], reverse=True)[:3]
     for ticker, score_val, components in top_signals:
         summary = ' + '.join([k for k, v in components.items() if v > 0])
-        send_telegram_alert(f"🔷 [Quantum Pulse]\n📈 BUY {ticker} | Score: {score_val}/10\nTriggers: {summary}")
+        send_telegram_alert(
+            f"🔷 [Quantum Pulse]\n"
+            f"📈 BUY {ticker} | Score: {score_val}/10\n"
+            f"Triggers: {summary}"
+        )
 
     # Fire any exit alerts
     for ticker, reasons in exit_alerts:
-        send_telegram_alert(f"🔷 [Quantum Pulse]\n⚠️ EXIT {ticker} | Reasons: {', '.join(reasons)}")
+        send_telegram_alert(
+            f"🔷 [Quantum Pulse]\n"
+            f"⚠️ EXIT {ticker} | Reasons: {', '.join(reasons)}"
+        )
 
 
 if __name__ == '__main__':
