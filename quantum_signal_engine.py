@@ -18,7 +18,6 @@ def run_quantum_engine():
     for ticker in universe:
         print(f"Processing {ticker}...")
 
-        # Download historical price data (e.g., 3 months daily)
         try:
             df = yf.download(ticker, period="3mo", interval="1d", progress=False)
         except Exception as e:
@@ -28,10 +27,8 @@ def run_quantum_engine():
             print(f"No data for {ticker}")
             continue
 
-        # Placeholder fair value (replace with actual lookup)
-        fair_value = df['Close'].iloc[-1]  # Last close price
+        fair_value = df['Close'].iloc[-1]  # Placeholder for fair value
 
-        # Calculate signal components
         scores = {
             'divergence': divergence_detector.score(df),
             'piotroski': piotroski_score.score(ticker),
@@ -46,18 +43,14 @@ def run_quantum_engine():
         for key, val in scores.items():
             print(f"  {key}: {val}")
 
-        # Simple composite score: sum all component scores (adjust weights if needed)
         composite_score = sum(scores.values())
         print(f"Composite score: {composite_score}")
 
-        # Define buy signal threshold
-        BUY_THRESHOLD = 4.0  # adjust as needed
+        BUY_THRESHOLD = 4.0  # Adjust threshold as needed
         buy_signal = composite_score >= BUY_THRESHOLD
 
-        # Compute exit signals
         exit_signal, reasons = exit_signals.compute_exit_signals(df, fair_value)
 
-        # Send alerts
         if buy_signal:
             message = (
                 f"🔷 [Quantum Pulse]\n"
