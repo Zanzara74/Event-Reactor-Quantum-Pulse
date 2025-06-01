@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - main
+  schedule:
+    - cron: '0 */3 * * *'  # Runs every 3 hours
 
 jobs:
   run_engine:
