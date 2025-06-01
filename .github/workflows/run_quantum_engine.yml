@@ -23,39 +23,16 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Cleanup numpy and pandas
+      - name: Upgrade pip
+        run: pip install --upgrade pip
+
+      - name: (Optional) Fix numpy/pandas incompatibility
         run: |
           pip uninstall -y numpy pandas
-
-      - name: Install numpy and pandas
-        run: |
           pip install numpy==1.24.3 pandas==1.5.3
 
       - name: Install dependencies
-        run: pip install -r requirements.txt --no-deps
+        run: pip install -r requirements.txt
 
-      - name: Install urllib3 explicitly
-        run: pip install urllib3
-
-      - name: Install charset_normalizer explicitly
-        run: pip install charset_normalizer
-
-      - name: Install idna explicitly
-        run: pip install idna
-
-      - name: Install certifi explicitly
-        run: pip install certifi
-
-      - name: Install cryptography explicitly
-        run: pip install cryptography
-
-      - name: Install beautifulsoup4 explicitly
-        run: pip install beautifulsoup4
-
-      - name: Install frozendict explicitly
-        run: pip install frozendict
-
-      - name: Install appdirs explicitly
-        run: pip install appdirs
       - name: Run Quantum Signal Engine
         run: python quantum_signal_engine.py
