@@ -15,20 +15,28 @@ def run_quantum_engine():
     universe = load_universe()
     print(f"Loaded {len(universe)} tickers to scan.")
 
-    for ticker in universe:
-        print(f"Processing {ticker}...")
+    failed_downloads = []  # will hold tickers that returned no data
+    total_checked = 0
+    buy_signals = []
+    exit_signals_list = []
 
+    for ticker in universe:
+        total_checked += 1
+        # Attempt to fetch 3 months of daily data
         try:
             df = yf.download(ticker, period="3mo", interval="1d", progress=False)
         except Exception as e:
-            print(f"Failed to fetch data for {ticker}: {e}")
-            continue
-        if df.empty:
-            print(f"No data for {ticker}")
+            failed_downloads.append((ticker, f"download error: {e}"))
             continue
 
-        fair_value = df['Close'].iloc[-1]  # Placeholder for fair value
+        if df is None or df.empty:
+            failed_downloads.append((ticker, "no data for 3mo"))
+            continue
 
+        # If we reach this point, we have a non‐empty DataFrame
+        fair_value = df['Close'].iloc[-1]  # placeholder for actual fair‐value logic
+
+        # Gather all component scores
         scores = {
             'divergence': divergence_detector.score(df),
             'piotroski': piotroski_score.score(ticker),
@@ -39,38 +47,55 @@ def run_quantum_engine():
             'cot_sentiment': cot_sentiment.score(ticker),
         }
 
-        print(f"Scores for {ticker}:")
-        for key, val in scores.items():
-            print(f"  {key}: {val}")
-
         composite_score = sum(scores.values())
-        print(f"Composite score: {composite_score}")
 
-        BUY_THRESHOLD = 4.0  # Adjust threshold as needed
-        buy_signal = composite_score >= BUY_THRESHOLD
+        BUY_THRESHOLD = 4.0
+        if composite_score >= BUY_THRESHOLD:
+            # queue up a buy‐alert; we’ll send all buy alerts after the loop
+            buy_signals.append((ticker, composite_score, scores))
 
-        exit_signal, reasons = exit_signals.compute_exit_signals(df, fair_value)
+        # Check exit conditions
+        exit_flag, reasons = exit_signals.compute_exit_signals(df, fair_value)
+        if exit_flag:
+            exit_signals_list.append((ticker, reasons))
 
-        if buy_signal:
-            message = (
-                f"🔷 [Quantum Pulse]\n"
-                f"📈 BUY signal for {ticker}\n"
-                f"Composite Score: {composite_score:.2f}\n"
-                f"Components: " + ", ".join(f"{k}={v}" for k, v in scores.items())
-            )
-            send_telegram_alert(message)
-            print(f"Sent BUY alert for {ticker}")
+    # 1) Print summary of how many tickers failed download
+    print(f"\nFinished scanning {total_checked} tickers.")
+    print(f"{len(failed_downloads)} tickers returned no data:")
+    if len(failed_downloads) <= 20:
+        # If the number is small, show which ones
+        for t, reason in failed_downloads:
+            print(f"  - {t}: {reason}")
+    else:
+        # Otherwise, just show the first 10 and say “and X more”
+        print("  (Showing first 10 missing tickers)")
+        for t, reason in failed_downloads[:10]:
+            print(f"  - {t}: {reason}")
+        print(f"  ... and {len(failed_downloads) - 10} more")
 
-        if exit_signal:
-            message = (
-                f"🔷 [Quantum Pulse]\n"
-                f"⚠️ EXIT signal for {ticker}\n"
-                f"Reasons: {', '.join(reasons)}"
-            )
-            send_telegram_alert(message)
-            print(f"Sent EXIT alert for {ticker}")
+    # 2) Send BUY alerts (if any)
+    for ticker, comp_score, comp_scores in buy_signals:
+        summary = ", ".join(f"{k}={v}" for k, v in comp_scores.items())
+        message = (
+            f"🔷 [Quantum Pulse]\n"
+            f"📈 BUY {ticker}\n"
+            f"Composite Score: {comp_score:.2f}\n"
+            f"Components: {summary}"
+        )
+        send_telegram_alert(message)
+        print(f"Sent BUY alert for {ticker}")
 
-        print("-" * 40)
+    # 3) Send EXIT alerts (if any)
+    for ticker, reasons in exit_signals_list:
+        message = (
+            f"🔷 [Quantum Pulse]\n"
+            f"⚠️ EXIT {ticker}\n"
+            f"Reasons: {', '.join(reasons)}"
+        )
+        send_telegram_alert(message)
+        print(f"Sent EXIT alert for {ticker}")
 
-if __name__ == '__main__':
+    print("\nDone.")
+
+if __name__ == "__main__":
     run_quantum_engine()
