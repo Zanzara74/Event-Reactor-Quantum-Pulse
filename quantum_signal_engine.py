@@ -1,101 +1,67 @@
-from modules import (
-    divergence_detector,
-    piotroski_score,
-    rsi_filter,
+import pandas as pd
+from datetime import datetime
+from quantum_pulse.signals import (
     seasonality_score,
+    rsi_filter,
+    divergence_detector,
     fair_value_check,
     break_even_tracker,
+    piotroski_score,
     cot_sentiment,
     exit_signals
 )
-from utils import load_universe, send_telegram_alert
-import yfinance as yf
+from quantum_pulse import score_weights, logger
+from utils import load_universe, get_price_data, send_telegram_alert, lookup_fair_value
 
 def run_quantum_engine():
     universe = load_universe()
-    print(f"Loaded {len(universe)} tickers to scan.")
-
-    failed_downloads = []  # will hold tickers that returned no data
-    total_checked = 0
-    buy_signals = []
-    exit_signals_list = []
+    scored_signals = []
+    exit_alerts = []
 
     for ticker in universe:
-        total_checked += 1
-        # Attempt to fetch 3 months of daily data
-        try:
-            df = yf.download(ticker, period="3mo", interval="1d", progress=False)
-        except Exception as e:
-            failed_downloads.append((ticker, f"download error: {e}"))
-            continue
-
+        df = get_price_data(ticker)
         if df is None or df.empty:
-            failed_downloads.append((ticker, "no data for 3mo"))
             continue
 
-        # If we reach this point, we have a non‐empty DataFrame
-        fair_value = df['Close'].iloc[-1]  # placeholder for actual fair‐value logic
+        fair_value = lookup_fair_value(ticker)
 
-        # Gather all component scores
-        scores = {
-            'divergence': divergence_detector.score(df),
-            'piotroski': piotroski_score.score(ticker),
-            'rsi': rsi_filter.score(df),
+        # Compute each component; now piotroski_score.score(ticker) uses real fundamentals
+        components = {
             'seasonality': seasonality_score.get(ticker),
+            'rsi': rsi_filter.score(df),
+            'divergence': divergence_detector.score(df),
             'fair_value': fair_value_check.score(df, fair_value),
             'break_even': break_even_tracker.score(ticker),
-            'cot_sentiment': cot_sentiment.score(ticker),
+            'piotroski': piotroski_score.score(ticker),
+            'cot': cot_sentiment.score(ticker)
         }
 
-        composite_score = sum(scores.values())
+        # Weighted sum ⇒ normalized 0–10
+        score = sum(score_weights.WEIGHTS[k] * components[k] for k in components)
+        max_score = sum(score_weights.WEIGHTS.values())
+        normalized_score = round((score / max_score) * 10, 2)
 
-        BUY_THRESHOLD = 4.0
-        if composite_score >= BUY_THRESHOLD:
-            # queue up a buy‐alert; we’ll send all buy alerts after the loop
-            buy_signals.append((ticker, composite_score, scores))
+        # Log the raw components + normalized score
+        logger.log_signal(ticker, normalized_score, components)
 
-        # Check exit conditions
-        exit_flag, reasons = exit_signals.compute_exit_signals(df, fair_value)
-        if exit_flag:
-            exit_signals_list.append((ticker, reasons))
+        if normalized_score >= 8:
+            scored_signals.append((ticker, normalized_score, components))
 
-    # 1) Print summary of how many tickers failed download
-    print(f"\nFinished scanning {total_checked} tickers.")
-    print(f"{len(failed_downloads)} tickers returned no data:")
-    if len(failed_downloads) <= 20:
-        # If the number is small, show which ones
-        for t, reason in failed_downloads:
-            print(f"  - {t}: {reason}")
-    else:
-        # Otherwise, just show the first 10 and say “and X more”
-        print("  (Showing first 10 missing tickers)")
-        for t, reason in failed_downloads[:10]:
-            print(f"  - {t}: {reason}")
-        print(f"  ... and {len(failed_downloads) - 10} more")
+        # Exit logic unchanged
+        exit_signal, reasons = exit_signals.compute_exit_signals(df, fair_value)
+        if exit_signal:
+            exit_alerts.append((ticker, reasons))
 
-    # 2) Send BUY alerts (if any)
-    for ticker, comp_score, comp_scores in buy_signals:
-        summary = ", ".join(f"{k}={v}" for k, v in comp_scores.items())
-        message = (
-            f"🔷 [Quantum Pulse]\n"
-            f"📈 BUY {ticker}\n"
-            f"Composite Score: {comp_score:.2f}\n"
-            f"Components: {summary}"
-        )
-        send_telegram_alert(message)
-        print(f"Sent BUY alert for {ticker}")
+    # Pick top 3 buy signals
+    top_signals = sorted(scored_signals, key=lambda x: x[1], reverse=True)[:3]
+    for ticker, score_val, components in top_signals:
+        summary = ' + '.join([k for k, v in components.items() if v > 0])
+        send_telegram_alert(f"🔷 [Quantum Pulse]\n📈 BUY {ticker} | Score: {score_val}/10\nTriggers: {summary}")
 
-    # 3) Send EXIT alerts (if any)
-    for ticker, reasons in exit_signals_list:
-        message = (
-            f"🔷 [Quantum Pulse]\n"
-            f"⚠️ EXIT {ticker}\n"
-            f"Reasons: {', '.join(reasons)}"
-        )
-        send_telegram_alert(message)
-        print(f"Sent EXIT alert for {ticker}")
+    # Fire any exit alerts
+    for ticker, reasons in exit_alerts:
+        send_telegram_alert(f"🔷 [Quantum Pulse]\n⚠️ EXIT {ticker} | Reasons: {', '.join(reasons)}")
 
-    print("\nDone.")
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     run_quantum_engine()
